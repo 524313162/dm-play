@@ -6,7 +6,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { getLoadingImages } from '../unit/api.js'
+import { getLoadingImages } from '../mock/index.js'
 const show = ref(true)
 const img = ref('')
 let timer = null
@@ -41,7 +41,7 @@ onBeforeUnmount(() => {
 }
 
 .loading-cover img {
-  object-fit:fill;
+  object-fit: fill;
   /* 保持宽高比缩放 */
   object-position: center;
   /* 图片居中显示 */
