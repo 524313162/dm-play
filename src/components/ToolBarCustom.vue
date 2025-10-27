@@ -1,21 +1,33 @@
 <template>
   <div class="toolbar-custom" :class="{ mobile: isMobile }" v-if="isMobile">
     <div class="toolbar-left-ad">
-      <!-- 广告位，可根据 config 动态插入 -->
-      <slot name="ad"></slot>
+      <slot name="ad">
+        <div class="ad-placeholder">广告位招租</div>
+      </slot>
     </div>
     <div class="toolbar-buttons">
-      <button v-for="btn in toolBars" :key="btn.key" @click="onClick(btn)">
+      <!-- 固定顺序：机器人 按钮 1 -->
+      <div class="toolbar-item robot-toggle" role="button" tabindex="0" @click="toggleRobot"
+        @keydown.enter="toggleRobot">
+        <i class="iconfont icon-duihuajiqiren"></i>
+      </div>
+      <!-- 固定顺序：弹幕 按钮 2 -->
+      <div class="toolbar-item danmuku-toggle" role="button" tabindex="0" @click="toggleDanmuku"
+        @keydown.enter="toggleDanmuku">
+        <i class="iconfont icon-danmu3"></i>
+      </div>
+      <!-- 其余自定义按钮放在后面 -->
+      <div v-for="btn in toolBars" :key="btn.key" class="toolbar-item" role="button" tabindex="0" @click="onClick(btn)"
+        @keydown.enter="onClick(btn)">
         <img v-if="btn.icon" :src="btn.icon" class="toolbar-icon" />
-        <span v-else>{{ btn.title }}</span>
+        <span v-else class="toolbar-text">{{ btn.title }}</span>
         <span v-if="btn.hots" class="toolbar-hots">{{ btn.hots }}</span>
-      </button>
-      <button class="danmuku-toggle" @click="toggleDanmuku">弹幕</button>
+      </div>
     </div>
     <transition name="danmuku-drawer">
-      <div v-if="showDanmuku" class="danmuku-drawer">
+      <div v-show="showDanmuku" class="danmuku-drawer">
         <div class="danmuku-container"></div>
-        <div class="danmuku-close" @click="closeDanmuku">关闭</div>
+        <div class="danmuku-close" @click="closeDanmuku"><i class="iconfont icon-guanbi"></i></div>
       </div>
     </transition>
   </div>
@@ -27,6 +39,7 @@ import { getConfig } from '../unit/api-service.js'
 
 const toolBars = ref([])
 const showDanmuku = ref(false)
+const robotVisible = ref(false)
 
 onMounted(async () => {
   const config = await getConfig()
@@ -38,12 +51,14 @@ onMounted(async () => {
 function onClick(btn) { if (btn.link) window.open(btn.link) }
 function toggleDanmuku() { showDanmuku.value = !showDanmuku.value }
 function closeDanmuku() { showDanmuku.value = false }
+function toggleRobot() { robotVisible.value = !robotVisible.value; emitRobotChange() }
+function emitRobotChange() { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: robotVisible.value } })) }
 
 const isMobile = computed(() => window.isMobile && window.isMobile())
-const mountSelector = computed(() => (isMobile.value ? '' : ''))
+const mountSelector = computed(() => (isMobile.value ? '.danmuku-container' : ''))
 const toolbarHeight = computed(() => window.system?.toolbarHeight || 60)
 
-defineExpose({ mountSelector, toolbarHeight })
+defineExpose({ mountSelector, toolbarHeight, robotVisible, toggleRobot })
 </script>
 
 <style scoped>
@@ -58,6 +73,8 @@ defineExpose({ mountSelector, toolbarHeight })
 .toolbar-custom.mobile {
   height: v-bind(toolbarHeight + 'px');
   position: relative;
+  background: #000;
+  /* 纯黑背景 */
 }
 
 .toolbar-left-ad {
@@ -69,35 +86,75 @@ defineExpose({ mountSelector, toolbarHeight })
   justify-content: flex-start;
 }
 
+.ad-placeholder {
+  font-size: 14px;
+  color: #666;
+  padding-left: 8px;
+}
+
 .toolbar-buttons {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.toolbar-buttons button {
-  background: #232323;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
-  font-size: 15px;
-  cursor: pointer;
+.toolbar-item {
   display: flex;
   align-items: center;
   gap: 4px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  /* 微弱背景 */
+  border-radius: 8px;
+  color: #ddd;
+  cursor: pointer;
+  user-select: none;
   position: relative;
+  transition: background .2s, color .2s;
 }
 
-.danmuku-toggle {
-  background: #23ade5;
+.toolbar-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  /* 略增强 */
   color: #fff;
-  font-weight: 600;
+}
+
+.toolbar-item:active {
+  background: rgba(255, 255, 255, 0.12);
+  /* 按压更明显 */
 }
 
 .toolbar-icon {
   width: 20px;
   height: 20px;
+}
+
+.toolbar-text {
+  font-size: 14px;
+}
+
+.danmuku-toggle {
+  background: rgba(255, 255, 255, 0.06);
+  /* 去掉突兀的色块 */
+  color: #bdbdbd;
+  /* 较淡的文字颜色 */
+}
+
+.danmuku-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  /* 仅 hover 给极轻背景 */
+  color: #ffffff;
+  /* 悬停仅提亮文字 */
+}
+
+.robot-toggle {
+  background: transparent;
+  color: #bdbdbd;
+}
+
+.robot-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
 }
 
 .toolbar-hots {
@@ -116,12 +173,13 @@ defineExpose({ mountSelector, toolbarHeight })
   bottom: 0;
   width: 100%;
   height: v-bind(toolbarHeight + 'px');
-  background: rgba(0, 0, 0, 0.85);
+  background: #101010;
+  /* 略亮，区分抽屉 */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
   box-sizing: border-box;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.6);
 }
 
 .danmuku-container {
@@ -143,17 +201,20 @@ defineExpose({ mountSelector, toolbarHeight })
 .danmuku-drawer-enter-from,
 .danmuku-drawer-leave-to {
   transform: translateY(100%);
-  opacity: 0;
+  filter: brightness(0.7);
+  opacity: 1;
+  /* 始终不透明 */
 }
 
 .danmuku-drawer-enter-active,
 .danmuku-drawer-leave-active {
-  transition: all .25s ease;
+  transition: transform .25s ease, filter .25s ease;
 }
 
 .danmuku-drawer-enter-to,
 .danmuku-drawer-leave-from {
   transform: translateY(0);
+  filter: brightness(1);
   opacity: 1;
 }
 </style>

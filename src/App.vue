@@ -17,4 +17,5 @@ const vodOption = computed(() => ({
 </script>
 <style>
 @import url('/src/assets/styles.css');
+@import url('/src/assets/fonts/iconfont.css')
 </style>

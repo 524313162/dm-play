@@ -7,6 +7,7 @@
     <component :is="playerComponent" v-bind="playerProps" @get-instance="onGetInstance" />
   </div>
   <ToolBar ref="toolbarRef"></ToolBar>
+  <RobotDrawer :show="robotVisible" @close="onRobotClose" @select="onRobotSelect" />
 </template>
 
 <script setup>
@@ -18,6 +19,7 @@ import ArtPlayer from './ArtPlayer.vue'
 import LivePlayer from './LivePlayer.vue'
 import ToolBar from './ToolBarCustom.vue'
 import NMessage from './NMessage.vue'
+import RobotDrawer from './RobotDrawer.vue'
 import { getConfig } from '../mock/index.js'
 import { initGlobalSystemConfig } from '../unit/utils.js'
 
@@ -31,6 +33,8 @@ const msgRef = ref(null)
 const loadingRef = ref(null)
 const toolbarRef = ref(null)
 const isMobile = ref(false)
+const robotVisible = ref(false)
+let artInstance = null
 
 function detectMobile() {
   isMobile.value = window.innerWidth < 860 || /Mobile|Android|iP(hone|od|ad)/.test(navigator.userAgent)
@@ -58,6 +62,8 @@ const playerProps = computed(() => {
   if (props.isLive) {
     return { url: props.url }
   }
+  debugger
+  console.log(toolbarRef.value?.mountSelector);
   return {
     option: { url: props.url },
     danmuApi: config.value?.danmuApi || '',
@@ -68,6 +74,7 @@ const playerProps = computed(() => {
 })
 
 function onGetInstance(art) {
+  artInstance = art
   loadingRef.value?.show()
   art.on('video:loadeddata', () => {
     loadingRef.value?.show()
@@ -102,6 +109,31 @@ function onGetInstance(art) {
     msgRef.value?.hideAll()
     art.play()
   })
+}
+
+function handleRobotVisibility(e) {
+  robotVisible.value = e.detail.visible
+  if (artInstance) {
+    if (robotVisible.value) {
+      artInstance.pause()
+    } else if (artInstance.video && artInstance.video.paused) {
+      artInstance.play()
+    }
+  }
+}
+window.addEventListener('robot-visibility-change', handleRobotVisibility)
+
+function onRobotClose() {
+  robotVisible.value = false
+  window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: false } }))
+}
+
+function onRobotSelect(url) {
+  robotVisible.value = false
+  window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: false } }))
+  if (url && artInstance) {
+    artInstance.switchUrl(url)
+  }
 }
 
 const notice = ref('')
