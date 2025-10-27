@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="loading-cover">
+  <div v-if="visible" class="loading-cover">
     <img :src="img" alt="loading" />
   </div>
 </template>
@@ -7,13 +7,12 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { getLoadingImages } from '../mock/index.js'
-const show = ref(true)
+const visible = ref(true)
 const img = ref('')
 let timer = null
 let imgs = []
 async function nextImg() {
-  if (!imgs.length) return
-  img.value = imgs[Math.floor(Math.random() * imgs.length)]
+  if (imgs.length) img.value = imgs[Math.floor(Math.random() * imgs.length)]
 }
 onMounted(async () => {
   imgs = await getLoadingImages()
@@ -23,16 +22,18 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   clearInterval(timer)
 })
+function show() { visible.value = true }
+function hide() { visible.value = false }
+function toggle(flag) { visible.value = flag }
+// 对外暴露控制方法
+defineExpose({ show, hide, toggle })
 </script>
 
 <style scoped>
 .loading-cover {
   position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: #181818;
+  inset: 0;
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,13 +42,10 @@ onBeforeUnmount(() => {
 }
 
 .loading-cover img {
-  object-fit: fill;
-  /* 保持宽高比缩放 */
-  object-position: center;
-  /* 图片居中显示 */
   width: 100%;
-  /* 横向图片限制宽度 */
-  margin: auto;
-  /* 关键：实现双向居中 */
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 </style>

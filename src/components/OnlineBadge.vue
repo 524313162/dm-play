@@ -33,7 +33,7 @@ onBeforeUnmount(() => {
 .online-badge {
   position: absolute;
   left: 20px;
-  bottom: 40px;
+  bottom: 65px;
   background: rgba(0, 0, 0, 0.10);
   color: #ffffff1f;
   font-size: 14px;

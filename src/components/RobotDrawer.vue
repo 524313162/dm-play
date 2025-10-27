@@ -18,7 +18,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { searchMovie } from '../unit/api.js'
+import { searchMovie } from '../unit/api-service.js'
 const emit = defineEmits(['close', 'select'])
 const input = ref('')
 const messages = ref([])
@@ -45,13 +45,17 @@ if (typeof window !== 'undefined') {
 <style scoped>
 .robot-drawer-mask {
   position: fixed;
-  left: 0; top: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.45);
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
   z-index: 200;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
 }
+
 .robot-drawer {
   width: 380px;
   height: 100%;
@@ -60,6 +64,7 @@ if (typeof window !== 'undefined') {
   display: flex;
   flex-direction: column;
 }
+
 .robot-header {
   padding: 16px;
   font-size: 18px;
@@ -69,18 +74,21 @@ if (typeof window !== 'undefined') {
   align-items: center;
   border-bottom: 1px solid #333;
 }
+
 .robot-body {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
   color: #fff;
 }
+
 .robot-footer {
   padding: 12px 16px;
   border-top: 1px solid #333;
   display: flex;
   gap: 8px;
 }
+
 .robot-footer input {
   flex: 1;
   padding: 6px 10px;
@@ -89,6 +97,7 @@ if (typeof window !== 'undefined') {
   background: #333;
   color: #fff;
 }
+
 .robot-footer button {
   background: #23ade5;
   color: #fff;
@@ -98,10 +107,12 @@ if (typeof window !== 'undefined') {
   font-size: 15px;
   cursor: pointer;
 }
+
 .robot-close {
   cursor: pointer;
   font-size: 22px;
 }
+
 @media (max-width: 600px) {
   .robot-drawer {
     width: 100vw;
@@ -112,22 +123,27 @@ if (typeof window !== 'undefined') {
     right: 0;
     position: fixed;
   }
+
   .robot-drawer-mask {
     align-items: flex-end;
     justify-content: center;
   }
+
   .robot-header {
     font-size: 16px;
     padding: 10px;
   }
+
   .robot-body {
     padding: 10px;
     font-size: 14px;
   }
+
   .robot-footer {
     padding: 8px 10px;
     gap: 4px;
   }
+
   .robot-footer button {
     font-size: 13px;
     padding: 5px 10px;

@@ -7,7 +7,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { getAd } from '../unit/api.js'
+import { getAd } from '../unit/api-service.js'
 const props = defineProps({
   type: { type: String, default: 'start' }, // start/pause/page
   adId: { type: [String, Number], default: 1 },
@@ -42,14 +42,18 @@ onBeforeUnmount(() => {
 <style scoped>
 .ads-mask {
   position: absolute;
-  left: 0; top: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.18);
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.18);
   z-index: 99;
   pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .ads-content {
   background: #fff;
   border-radius: 8px;
@@ -58,6 +62,7 @@ onBeforeUnmount(() => {
   max-width: 90vw;
   position: relative;
 }
+
 .ads-close {
   position: absolute;
   top: 8px;
