@@ -2,7 +2,7 @@
   <div class="player-wrapper" :class="{ mobile: isMobile }">
     <LoadingCover ref="loadingRef" />
     <OnlineBadge />
-    <NoticeBar v-if="noticeOn && notice" :notice="notice" />
+    <NoticeBar v-if="notice" :notice="notice" />
     <NMessage ref="msgRef" />
     <component :is="playerComponent" v-bind="playerProps" @get-instance="onGetInstance" />
   </div>
@@ -136,8 +136,7 @@ function onRobotSelect(url) {
   }
 }
 
-const notice = ref('')
-const noticeOn = ref(false)
+const notice = ref('这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果')
 const toolbarHeight = computed(() => window.system?.toolbarHeight || 60)
 </script>
 
