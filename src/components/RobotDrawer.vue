@@ -29,7 +29,7 @@
         </div>
         <div class="robot-footer">
           <input v-model="input" @keyup.enter="send" placeholder="输入影片名..." />
-          <button @click="send">发送</button>
+          <button @click="send" :disabled="loading">{{ loading ? '发送中...' : '发送' }}</button>
         </div>
       </div>
     </transition>
@@ -44,12 +44,13 @@ const show = computed(() => props.show)
 const emit = defineEmits(['close', 'select'])
 const input = ref('')
 const messages = ref([])
+const loading = ref(false)
 
 const isMobile = computed(() => window.innerWidth < 860 || /Mobile|Android|iP(hone|od|ad)/.test(navigator.userAgent))
 const transitionName = computed(() => isMobile.value ? 'robot-fade' : 'robot-drawer-right')
 
 const STORAGE_KEY = 'robot_chat_history'
-const MAX_HISTORY = 20
+const MAX_HISTORY = 100
 
 function loadHistory() {
   try {
@@ -59,9 +60,7 @@ function loadHistory() {
     if (Array.isArray(arr)) {
       messages.value = arr.map(m => ({
         id: Date.now() + Math.random(), // 重新生成 id 防止冲突
-        role: m.role,
-        text: m.text,
-        films: Array.isArray(m.films) ? m.films : undefined
+        ...m
       }))
     }
   } catch (e) {
@@ -71,8 +70,7 @@ function loadHistory() {
 
 function saveHistory() {
   try {
-    const plain = messages.value.map(m => ({ role: m.role, text: m.text, films: m.films }))
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(plain.slice(-MAX_HISTORY)))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.value.slice(-MAX_HISTORY)))
   } catch (e) {
     console.warn('save history failed', e)
   }
@@ -98,20 +96,23 @@ function selectFilm(film) {
 
 async function send() {
   const keyword = input.value.trim()
-  if (!keyword) return
+  if (!keyword || loading.value) return
   pushMessage({ role: 'user', text: keyword })
   input.value = ''
+  loading.value = true
   try {
     const res = await searchMovie(keyword)
-    const list = res && Array.isArray(res.list) ? res.list : []
-    if (list.length) {
-      pushMessage({ role: 'bot', films: list.map(i => ({ id: i.id, name: i.name })) })
+    const content = res?.data?.content || []
+    if (content.length) {
+      pushMessage({ role: 'bot', text: `搜索词：${keyword}`, films: content.map(i => ({ id: i.id, name: i.name })), content })
     } else {
-      pushMessage({ role: 'bot', text: '未找到相关影片' })
+      pushMessage({ role: 'bot', text: '未找到相关影片', content: [] })
     }
   } catch (e) {
     console.error(e)
-    pushMessage({ role: 'bot', text: '查询失败，请稍后重试' })
+    pushMessage({ role: 'bot', text: '查询失败，请稍后重试', content: [] })
+  } finally {
+    loading.value = false
   }
 }
 function close() { emit('close') }

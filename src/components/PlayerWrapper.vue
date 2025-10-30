@@ -142,10 +142,10 @@ function onRobotClose() {
 }
 
 // 机器人选中视频
-function onRobotSelect(url) {
+function onRobotSelect(item) {
   robotVisible.value = false
-  if (url && artInstance) {
-    artInstance.switchUrl(url)
+  if (item && artInstance) {
+    // 这里需要通过item.id 去获取视频详情,并返回视频地址
   }
 }
 
