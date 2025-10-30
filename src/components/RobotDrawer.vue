@@ -1,7 +1,7 @@
 <template>
   <div v-if="show" class="robot-drawer-mask" @click.self="close">
-    <transition name="robot-drawer-left">
-      <div class="robot-drawer">
+    <transition :name="transitionName">
+      <div class="robot-drawer" :class="{ mobile: isMobile }">
         <div class="robot-header">
           <span class="robot-back" @click="close"><i class="iconfont icon-xiangzuo"></i></span>
           <span>DMPlay 机器人求片</span>
@@ -44,6 +44,9 @@ const show = computed(() => props.show)
 const emit = defineEmits(['close', 'select'])
 const input = ref('')
 const messages = ref([])
+
+const isMobile = computed(() => window.innerWidth < 860 || /Mobile|Android|iP(hone|od|ad)/.test(navigator.userAgent))
+const transitionName = computed(() => isMobile.value ? 'robot-fade' : 'robot-drawer-right')
 
 const STORAGE_KEY = 'robot_chat_history'
 const MAX_HISTORY = 20
@@ -117,20 +120,62 @@ onMounted(() => loadHistory())
 </script>
 
 <style scoped>
-/* 抽屉左右滑动动画 */
-.robot-drawer-left-enter-from,
-.robot-drawer-left-leave-to {
-  transform: translateX(-100%);
+/* PC端右侧滑入滑出动画 */
+.robot-drawer-right-enter-from,
+.robot-drawer-right-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
 }
 
-.robot-drawer-left-enter-to,
-.robot-drawer-left-leave-from {
+.robot-drawer-right-enter-to,
+.robot-drawer-right-leave-from {
   transform: translateX(0);
+  opacity: 1;
 }
 
-.robot-drawer-left-enter-active,
-.robot-drawer-left-leave-active {
-  transition: transform .35s cubic-bezier(.25, .8, .25, 1);
+.robot-drawer-right-enter-active,
+.robot-drawer-right-leave-active {
+  transition: transform .35s cubic-bezier(.25, .8, .25, 1), opacity .25s;
+}
+
+/* 移动端淡入淡出动画 */
+.robot-fade-enter-from,
+.robot-fade-leave-to {
+  opacity: 0;
+}
+
+.robot-fade-enter-to,
+.robot-fade-leave-from {
+  opacity: 1;
+}
+
+.robot-fade-enter-active,
+.robot-fade-leave-active {
+  transition: opacity .25s;
+}
+
+.robot-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: auto;
+  width: 100vw;
+  max-width: 500px;
+  height: 100vh;
+  background: #ffffff;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -2px 0 16px rgba(0, 0, 0, 0.12);
+}
+
+.robot-drawer.mobile {
+  left: 0;
+  right: 0;
+  width: 100vw;
+  max-width: 100vw;
+  box-shadow: none;
 }
 
 /* 聊天列表样式 */
@@ -274,17 +319,6 @@ onMounted(() => loadHistory())
   background: rgba(0, 0, 0, .45);
   z-index: 200;
   display: flex;
-}
-
-.robot-drawer {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #ffffff;
-  color: #000;
-  display: flex;
-  flex-direction: column;
 }
 
 .robot-header {

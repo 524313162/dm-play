@@ -1,6 +1,9 @@
-// 播放器与弹幕配置集中管理
-// 仅保留动态部分在调用处传入，静态与默认项放这里，便于统一维护
-
+const icons = {
+  loading: require('@/assets/icons/ploading.gif'),
+  state: require('@/assets/icons/state.svg'),
+  indicator: require('@/assets/icons/indicator.svg'),
+  xuanji: '<i class="iconfont icon-xuanjiicon"></i>'
+}
 // 基础播放器默认配置（除 url, container 由调用处决定）
 export const basePlayerOption = {
   setting: true,
@@ -24,26 +27,37 @@ export const basePlayerOption = {
   airplay: true,
   volume: 0.7,
   isLive: false, //使用直播模式，会隐藏进度条和播放时间
-  lang: 'zh-cn'
+  moreVideoAttr: {
+    'webkit-playsinline': false,
+    playsInline: false,
+    crossOrigin: 'anonymous'
+  },
+  contextmenu: [],
+  controls: [],
+  lang: 'zh-cn',
+  icons: {
+    loading: `<img src="${icons.loading}" />`,
+    state: `<img width="150" heigth="150" src="${icons.state}"/>`,
+    indicator: `<img width="20" heigth="20" src="${icons.indicator}"/>`
+  }
 }
-
 // HLS 控制插件默认配置
 export function createHlsControlOption() {
   return {
-    quality: {
-      control: true,
-      setting: true,
-      getName: (level) => `${level.height}P`,
-      title: 'Quality',
-      auto: 'Auto'
-    },
-    audio: {
-      control: true,
-      setting: true,
-      getName: (track) => track.name,
-      title: 'Audio',
-      auto: 'Auto'
-    }
+    // quality: {
+    //   control: true,
+    //   setting: true,
+    //   getName: (level) => `${level.height}P`,
+    //   title: 'Quality',
+    //   auto: 'Auto'
+    // },
+    // audio: {
+    //   control: true,
+    //   setting: true,
+    //   getName: (track) => track.name,
+    //   title: 'Audio',
+    //   auto: 'Auto'
+    // }
   }
 }
 
@@ -87,12 +101,18 @@ export function createDanmukuOption({
     filter: (d) => (filterDanmu ? filterDanmu(d) : d.text.length <= 50),
     beforeVisible: (danmu) =>
       beforeVisible ? beforeVisible(danmu) : danmu.text.trim(),
-    mount: mountSelector || undefined,
+    mount: mountSelector,
     visible: true,
     emitter: true,
     maxLength: 200,
     lockTime: 5,
     theme: 'dark',
+    icons: {
+      danmuOn: '<i class="iconfont icon-danmu"></i>',
+      danmuOff: '<i class="iconfont icon-guanbidanmu"></i>',
+      danmuConfig: '<i class="iconfont icon-danmushezhi"></i>',
+      danmuStyle: '<i class="iconfont icon-43_zhuti"></i>'
+    },
     beforeEmit(danmu) {
       return sendDanmuToServer(danmu)
     }

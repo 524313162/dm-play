@@ -1,18 +1,16 @@
 <template>
   <div class="player-wrapper" :class="{ mobile: isMobile }">
     <LoadingCover ref="loadingRef" />
-    <OnlineBadge />
     <NoticeBar v-if="notice" :notice="notice" />
     <NMessage ref="msgRef" />
     <component :is="playerComponent" v-bind="playerProps" @get-instance="onGetInstance" />
   </div>
-  <ToolBar ref="toolbarRef"></ToolBar>
+  <ToolBar ref="toolbarRef" :toolBars="toolBars" :onOpenRobot="openRobot"></ToolBar>
   <RobotDrawer :show="robotVisible" @close="onRobotClose" @select="onRobotSelect" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import OnlineBadge from './OnlineBadge.vue'
+import { ref, computed, onMounted } from 'vue'
 import NoticeBar from './NoticeBar.vue'
 import LoadingCover from './LoadingCover.vue'
 import ArtPlayer from './ArtPlayer.vue'
@@ -20,33 +18,34 @@ import LivePlayer from './LivePlayer.vue'
 import ToolBar from './ToolBarCustom.vue'
 import NMessage from './NMessage.vue'
 import RobotDrawer from './RobotDrawer.vue'
-import { getConfig } from '../mock/index.js'
-import { initGlobalSystemConfig } from '../unit/utils.js'
+import { getConfig, getOnlineCount } from '../mock/index.js'
+import { initGlobalSystemConfig, getMd5 } from '../unit/utils.js'
 
 const props = defineProps({
   isLive: { type: Boolean, default: false },
   url: { type: String, default: '' }
 })
-
+const notice = ref('')
 const config = ref(null)
+const toolBars = ref([])
 const msgRef = ref(null)
 const loadingRef = ref(null)
 const toolbarRef = ref(null)
 const isMobile = ref(false)
 const robotVisible = ref(false)
 let artInstance = null
+let wasPlaying = false
 
-function detectMobile() {
-  isMobile.value = window.innerWidth < 860 || /Mobile|Android|iP(hone|od|ad)/.test(navigator.userAgent)
-}
 
+// 初始化, 加载配置
 onMounted(async () => {
   initGlobalSystemConfig()
-  detectMobile()
-  window.addEventListener('resize', detectMobile)
   msgRef.value?.updateLine('player', { text: '初始化播放器...', status: 'loading' })
   try {
-    if (!props.isLive) config.value = await getConfig()
+    config.value = (await getConfig()).data || {}
+    toolBars.value = config.value?.toolBars || config.value?.ad?.toolBars || []
+    console.log(config.value)
+    notice.value = config.value?.notice || ''
     msgRef.value?.updateLine('player', { text: '播放器准备就绪', status: 'success' })
   } catch (e) {
     msgRef.value?.updateLine('player', { text: '配置加载失败', status: 'error' })
@@ -54,22 +53,38 @@ onMounted(async () => {
   }
 })
 
-onBeforeUnmount(() => window.removeEventListener('resize', detectMobile))
-
 const playerComponent = computed(() => (props.isLive ? LivePlayer : ArtPlayer))
+
+// 自定义菜单
+const customControls = computed(() => {
+  if (isMobile.value) return []
+  return [{
+    position: 'right',
+    html: "<i class='iconfont icon-duihuajiqiren1'></i>",
+    tooltip: '影片查找',
+    style: { color: '#fff' },
+    click: function () {
+      if (artInstance) {
+        openRobot()
+      }
+    }
+  }]
+})
 
 const playerProps = computed(() => {
   if (props.isLive) {
     return { url: props.url }
   }
-  debugger
-  console.log(toolbarRef.value?.mountSelector);
   return {
     option: { url: props.url },
     danmuApi: config.value?.danmuApi || '',
     danmuOn: !!config.value?.danmuOn,
-    vodId: '',
-    mountSelector: toolbarRef.value?.mountSelector || ''
+    vodId: props.url ? getMd5(props.url) : '',
+    mountSelector: toolbarRef.value?.mountSelector,
+    customControls: customControls.value,
+    onlineFunc: async () => {
+      return await getOnlineCount()
+    }
   }
 })
 
@@ -107,36 +122,33 @@ function onGetInstance(art) {
   art.on('play', () => {
     loadingRef.value?.hide()
     msgRef.value?.hideAll()
-    art.play()
   })
 }
 
-function handleRobotVisibility(e) {
-  robotVisible.value = e.detail.visible
+function openRobot() {
+  robotVisible.value = true
   if (artInstance) {
-    if (robotVisible.value) {
-      artInstance.pause()
-    } else if (artInstance.video && artInstance.video.paused) {
-      artInstance.play()
-    }
+    wasPlaying = artInstance.playing
+    if (wasPlaying) artInstance.pause()
   }
 }
-window.addEventListener('robot-visibility-change', handleRobotVisibility)
 
+// 机器人显示
 function onRobotClose() {
   robotVisible.value = false
-  window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: false } }))
+  if (artInstance && wasPlaying) {
+    artInstance.play()
+  }
 }
 
+// 机器人选中视频
 function onRobotSelect(url) {
   robotVisible.value = false
-  window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: false } }))
   if (url && artInstance) {
     artInstance.switchUrl(url)
   }
 }
 
-const notice = ref('这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果,这是一个测试的滚动效果')
 const toolbarHeight = computed(() => window.system?.toolbarHeight || 60)
 </script>
 

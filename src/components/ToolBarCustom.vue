@@ -1,5 +1,5 @@
 <template>
-  <div class="toolbar-custom" :class="{ mobile: isMobile }" v-if="isMobile">
+  <div class="toolbar-custom" :class="{ mobile: isMobile }" v-show="isMobile">
     <div class="toolbar-left-ad">
       <slot name="ad">
         <div class="ad-placeholder">广告位招租</div>
@@ -7,18 +7,16 @@
     </div>
     <div class="toolbar-buttons">
       <!-- 固定顺序：机器人 按钮 1 -->
-      <div class="toolbar-item robot-toggle" role="button" tabindex="0" @click="toggleRobot"
-        @keydown.enter="toggleRobot">
-        <i class="iconfont icon-duihuajiqiren"></i>
+      <div class="toolbar-item robot-toggle" role="button" tabindex="0" @click="onOpenRobot">
+        <i class="iconfont icon-duihuajiqiren1"></i>
       </div>
       <!-- 固定顺序：弹幕 按钮 2 -->
-      <div class="toolbar-item danmuku-toggle" role="button" tabindex="0" @click="toggleDanmuku"
-        @keydown.enter="toggleDanmuku">
+      <div class="toolbar-item danmuku-toggle" role="button" tabindex="0" @click="toggleDanmuku">
         <i class="iconfont icon-danmu3"></i>
       </div>
       <!-- 其余自定义按钮放在后面 -->
-      <div v-for="btn in toolBars" :key="btn.key" class="toolbar-item" role="button" tabindex="0" @click="onClick(btn)"
-        @keydown.enter="onClick(btn)">
+      <div v-for="btn in props.toolBars" :key="btn.key" class="toolbar-item" role="button" tabindex="0"
+        @click="onClick(btn)" @keydown.enter="onClick(btn)">
         <img v-if="btn.icon" :src="btn.icon" class="toolbar-icon" />
         <span v-else class="toolbar-text">{{ btn.title }}</span>
         <span v-if="btn.hots" class="toolbar-hots">{{ btn.hots }}</span>
@@ -34,31 +32,33 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { getConfig } from '../unit/api-service.js'
+import { ref, computed } from 'vue'
 
-const toolBars = ref([])
-const showDanmuku = ref(false)
-const robotVisible = ref(false)
-
-onMounted(async () => {
-  const config = await getConfig()
-  if (config && config.ad && Array.isArray(config.ad.toolBars)) {
-    toolBars.value = config.ad.toolBars
+const props = defineProps({
+  toolBars: {
+    type: Array,
+    default: () => []
+  },
+  onOpenRobot: {
+    type: Function,
+    default: null
   }
 })
+
+const showDanmuku = ref(false)
 
 function onClick(btn) { if (btn.link) window.open(btn.link) }
 function toggleDanmuku() { showDanmuku.value = !showDanmuku.value }
 function closeDanmuku() { showDanmuku.value = false }
-function toggleRobot() { robotVisible.value = !robotVisible.value; emitRobotChange() }
-function emitRobotChange() { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('robot-visibility-change', { detail: { visible: robotVisible.value } })) }
+function onOpenRobot() {
+  if (props.onOpenRobot) props.onOpenRobot()
+}
 
 const isMobile = computed(() => window.isMobile && window.isMobile())
-const mountSelector = computed(() => (isMobile.value ? '.danmuku-container' : ''))
+const mountSelector = computed(() => (isMobile.value ? document.querySelector('.danmuku-container') : undefined))
 const toolbarHeight = computed(() => window.system?.toolbarHeight || 60)
 
-defineExpose({ mountSelector, toolbarHeight, robotVisible, toggleRobot })
+defineExpose({ mountSelector, toolbarHeight, onOpenRobot })
 </script>
 
 <style scoped>
@@ -180,6 +180,7 @@ defineExpose({ mountSelector, toolbarHeight, robotVisible, toggleRobot })
   justify-content: space-between;
   box-sizing: border-box;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.6);
+  background-color: rgba(48, 48, 48, 0.8);
 }
 
 .danmuku-container {
@@ -187,6 +188,7 @@ defineExpose({ mountSelector, toolbarHeight, robotVisible, toggleRobot })
   height: 100%;
   display: flex;
   align-items: center;
+  color: #fff;
 }
 
 .danmuku-close {

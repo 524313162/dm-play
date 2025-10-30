@@ -1,5 +1,8 @@
 // 通用工具函数
 
+import Artplayer from 'artplayer'
+import CryptoJS from 'crypto-js/md5'
+
 export function getQueryParams() {
   const params = {}
   const search = window.location.search.substring(1)
@@ -11,20 +14,9 @@ export function getQueryParams() {
   return params
 }
 
-export function isMobile() {
-  return (
-    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
-    window.innerWidth < 860
-  )
-}
-
 // 初始化全局标记与监听
 export function initGlobalDeviceFlag() {
-  const update = () => {
-    window.__IS_MOBILE__ = isMobile()
-  }
-  update()
-  window.addEventListener('resize', update)
+  window.__IS_MOBILE__ = Artplayer.utils.isMobile
   // 暴露一个全局函数
   window.isMobile = () => window.__IS_MOBILE__
 }
@@ -41,4 +33,8 @@ export function initGlobalSystemConfig() {
     // 合并，保持已有引用
     Object.assign(window.system, system)
   }
+}
+
+export function getMd5(str) {
+  return CryptoJS(str).toString()
 }

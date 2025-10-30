@@ -14,22 +14,46 @@ function wrap(data, { delay = randomDelay(), errorRate = 0 } = {}) {
 }
 
 export async function getOnlineCount() {
-  return wrap(Math.floor(30 + Math.random() * 50))
+  return wrap({ data: Math.floor(30 + Math.random() * 50) })
 }
+// ...existing code...
 
 export async function getConfig() {
   return wrap({
-    notice: '欢迎使用 DMPlay 播放器 (Mock 独立文件)',
-    noticeOn: true,
-    toolBars: [
-      { key: 'robot', title: '求片' },
-      { key: 'asset', title: '选集' }
-    ],
-    danmuOn: true,
-    danmuApi: '/api/v1.0/Danmu',
-    pageAdScript: '',
-    blackWords: 'spam,广告,非法',
-    copywriting: ['复制口令 A', '复制口令 B']
+    temp: null,
+    msg: null,
+    data: {
+      ad: {
+        startAds: [],
+        pauseAds: [],
+        toolBars: [
+          {
+            key: 'zyz',
+            title: 'DMPlay',
+            tip: '好用的播放器',
+            hots: '',
+            icon: '',
+            link: 'https://dmplay.knowhub.vip'
+          }
+        ],
+        copywriting: [
+          'l:/RbsNVUM908Y 或复制此消息打开支付宝搜索，快来领碰一下支付红包啦  u:/z ZH6213 2021/05/08'
+        ],
+        jumpLink: [],
+        pageAd:
+          "var sawaid = 'TIM'+Math.floor(Math.random() * 10000);\r\nvar sd3 = document.createElement(\"SD3MTI\");\r\nsd3.id = sawaid;\r\nvar sc =  document.createElement(\"script\");\r\nsc.setAttribute('src','https://ssl.zax01.com/o.php?id=8199');\r\ndocument.body.appendChild(sd3);\r\ndocument.body.appendChild(sc);"
+      },
+      notice:
+        '通知：视频上的博彩广告请勿相信，该广告是视频资源自带，播放器无法去除，请大家不要上当受骗，合作资源站资源资源迎来重大更新，欢迎大家采集哦。若有不会采集可联系我免费帮忙配置，及播放器配置。若支持逗喵资源就点点下面的广告吧，播放器不收取任何费用，',
+      noticeOn: true,
+      danmuApi: 'https://dmplay.knowhub.vip/api/v1.0/Danmu',
+      danmuOn: true,
+      danmuRule: '/Article/detail/1',
+      danmuTip: '请文明发言！',
+      blackWords: '他妈',
+      crashCode: null
+    },
+    state: 0
   })
 }
 

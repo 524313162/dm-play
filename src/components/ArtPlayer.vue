@@ -4,13 +4,26 @@
 <script setup>
 import Artplayer from 'artplayer'
 import artplayerPluginHlsControl from 'artplayer-plugin-hls-control'
-import artplayerPluginDanmuku from 'artplayer-plugin-danmuku'
+// import artplayerPluginDanmuku from 'artplayer-plugin-danmuku'
+import artplayerProxyCanvas from 'artplayer-proxy-canvas'
+import artplayerOnline from '@/plugins/artplayer-plugin-online'
+import artplayerPluginDanmuku from '@/plugins/artplayer-plugin-danmuku'
 import artplayerPluginDocumentPip from 'artplayer-plugin-document-pip'
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { getDanmuList, sendDanmu } from '../mock/index.js'
-import { createPlayerOption, createHlsControlOption, createDocumentPipOption, createDanmukuOption, createCustomType } from '../unit/app-config.js'
+import { createPlayerOption, createHlsControlOption, createDocumentPipOption, createDanmukuOption, createCustomType } from '../unit/player-config.js'
 
-const props = defineProps({ option: { type: Object, required: true }, danmuOn: { type: Boolean, default: true }, vodId: { type: [String, Number], default: '' }, mountSelector: { type: String, default: '' } })
+// 关闭右键菜单
+Artplayer.CONTEXTMENU = false;
+
+const props = defineProps({
+    option: { type: Object, required: true },
+    danmuOn: { type: Boolean, default: true },
+    vodId: { type: [String, Number], default: '' },
+    mountSelector: { type: String, default: undefined },
+    customControls: { type: Array, default: () => [] },
+    onlineFunc: { type: Function, default: () => { } }
+})
 const emit = defineEmits(['getInstance'])
 
 const art = shallowRef(null)
@@ -31,11 +44,14 @@ onMounted(() => {
         art.value = new Artplayer({
             ...createPlayerOption({ url: props.option.url }),
             container: $container.value,
+            controls: props.customControls || [],
             plugins: [
+                artplayerOnline({ func: props.onlineFunc }),
                 artplayerPluginHlsControl(createHlsControlOption()),
                 artplayerPluginDocumentPip(createDocumentPipOption()),
                 artplayerPluginDanmuku(createDanmukuOption({ danmuOn: danmuOn.value, vodId: vodId.value, loadDanmuku, sendDanmuToServer, mountSelector: props.mountSelector }))
             ],
+            proxy: artplayerProxyCanvas(),
             customType: createCustomType()
         })
         emit('getInstance', art.value)
