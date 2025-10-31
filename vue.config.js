@@ -2,6 +2,9 @@ const CompressionPlugin = require('compression-webpack-plugin')
 
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
+  configureWebpack: {
+    devtool: 'source-map'
+  },
   transpileDependencies: true,
   chainWebpack: (config) => {
     //config.module.rule('images').use('url-loader').loader('url-loader').end()

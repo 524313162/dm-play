@@ -6,6 +6,14 @@
       </slot>
     </div>
     <div class="toolbar-buttons">
+      <!-- 其余自定义按钮放在前面 -->
+      <div v-for="btn in props.toolBars" :key="btn.key" class="toolbar-item" role="button" tabindex="0"
+        @click="onClick(btn)">
+        <i v-if="btn.icon && btn.icon.startsWith('icon-')" :class="['iconfont', btn.icon]"></i>
+        <img v-else-if="btn.icon" :src="btn.icon" class="toolbar-icon" />
+        <span v-else class="toolbar-text">{{ btn.title }}</span>
+        <span v-if="btn.hots" class="toolbar-hots">{{ btn.hots }}</span>
+      </div>
       <!-- 固定顺序：机器人 按钮 1 -->
       <div class="toolbar-item robot-toggle" role="button" tabindex="0" @click="onOpenRobot">
         <i class="iconfont icon-duihuajiqiren1"></i>
@@ -13,13 +21,6 @@
       <!-- 固定顺序：弹幕 按钮 2 -->
       <div class="toolbar-item danmuku-toggle" role="button" tabindex="0" @click="toggleDanmuku">
         <i class="iconfont icon-danmu3"></i>
-      </div>
-      <!-- 其余自定义按钮放在后面 -->
-      <div v-for="btn in props.toolBars" :key="btn.key" class="toolbar-item" role="button" tabindex="0"
-        @click="onClick(btn)" @keydown.enter="onClick(btn)">
-        <img v-if="btn.icon" :src="btn.icon" class="toolbar-icon" />
-        <span v-else class="toolbar-text">{{ btn.title }}</span>
-        <span v-if="btn.hots" class="toolbar-hots">{{ btn.hots }}</span>
       </div>
     </div>
     <transition name="danmuku-drawer">
@@ -47,7 +48,10 @@ const props = defineProps({
 
 const showDanmuku = ref(false)
 
-function onClick(btn) { if (btn.link) window.open(btn.link) }
+function onClick(btn) {
+  if (btn.link) window.open(btn.link)
+  else if (btn.onClick) btn.onClick()
+}
 function toggleDanmuku() { showDanmuku.value = !showDanmuku.value }
 function closeDanmuku() { showDanmuku.value = false }
 function onOpenRobot() {
@@ -95,17 +99,12 @@ defineExpose({ mountSelector, toolbarHeight, onOpenRobot })
 .toolbar-buttons {
   display: flex;
   align-items: center;
-  gap: 12px;
 }
 
 .toolbar-item {
   display: flex;
   align-items: center;
-  gap: 4px;
   padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  /* 微弱背景 */
-  border-radius: 8px;
   color: #ddd;
   cursor: pointer;
   user-select: none;
