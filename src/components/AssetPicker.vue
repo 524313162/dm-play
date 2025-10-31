@@ -1,12 +1,13 @@
 <template>
-  <transition v-if="isShow" :name="isMobile ? 'asset-fade' : 'asset-slide-up'">
+  <transition v-if="props.show" :name="isMobile ? 'asset-fade' : 'asset-slide-up'">
     <div class="asset-picker-mask" @click.self="close">
       <div class="asset-picker" :class="{ mobile: isMobile }">
         <!-- PC端 tab -->
         <template v-if="!isMobile">
-          <div class="asset-tabs">
+          <div class="asset-tabs" style="position:relative;">
             <div v-for="asset in assets" :key="asset.key" class="asset-tab"
               :class="{ active: asset.key === active.asset }" v-on:click="selectTab(asset.key)">{{ asset.name }}</div>
+            <span class="asset-pc-close" @click="close">×</span>
           </div>
           <div class="asset-tab-content">
             <div class="asset-vol-list-wrapper">
@@ -51,16 +52,12 @@
 import { computed, ref, watch, nextTick } from 'vue'
 const props = defineProps({
   assets: Array,
-  active: Object
+  active: Object,
+  show: Boolean
 })
-const emit = defineEmits(['selectAsset', 'selectVol'])
+const emit = defineEmits(['selectAsset', 'selectVol', 'onClose'])
 const isMobile = window.isMobile()
 const volList = ref(null)
-const show = ref(false)
-
-const isShow = computed(() => {
-  return show.value
-})
 
 const currentAsset = computed(() => {
   return props.assets.find(a => a.key === props.active.asset) || props.assets[0] || { urls: [] }
@@ -77,33 +74,33 @@ function scrollVolList(direction) {
   }
 }
 
+// PC端横滑选集，切tab自动滚动到当前集，代码幽默易懂
 function scrollToActiveVol() {
-  if (isMobile) return
+  if (isMobile) return // 移动端你别管
   nextTick(() => {
-    const el = volList.value
-    if (!el) return
-    const btns = el.querySelectorAll('.asset-btn')
-    const idx = (props.active.vol || 1) - 1
+    const el = volList.value // 选集大滑槽
+    if (!el) return // 没滑槽就溜了
+    const btns = el.querySelectorAll('.asset-btn') // 所有小按钮
+    const idx = (props.active.vol || 1) - 1 // 当前集的下标
     if (btns && btns[idx]) {
-      const btn = btns[idx]
-      const elRect = el.getBoundingClientRect()
-      const btnRect = btn.getBoundingClientRect()
-      // 如果按钮不在可见区域，则滚动到按钮
-      if (btnRect.left < elRect.left || btnRect.right > elRect.right) {
-        el.scrollLeft = btn.offsetLeft - el.clientWidth / 2 + btn.clientWidth / 2
-      }
+      const btn = btns[idx] // 目标按钮
+      // 让目标按钮滚到中间，像主角一样C位出道，带平滑动画
+      el.scrollTo({
+        left: btn.offsetLeft - el.clientWidth / 2 + btn.clientWidth / 2,
+        behavior: 'smooth'
+      })
     }
   })
 }
 
+// 只要资源tab变了，自动C位当前集
 watch(() => props.active.asset, () => {
   scrollToActiveVol()
 })
 
 function selectTab(key) {
   emit('selectAsset', key)
-  // 切tab后自动滚动到当前集
-  scrollToActiveVol()
+  scrollToActiveVol() // 切tab也要C位
 }
 
 function selectVol(e) {
@@ -111,18 +108,14 @@ function selectVol(e) {
   const vol = idx + 1
   const asset = currentAsset.value.key
   const url = currentAsset.value.urls && currentAsset.value.urls[idx] ? currentAsset.value.urls[idx].url : ''
-  emit('selectVol', { asset, vol, url })
   close()
+  emit('selectVol', { asset, vol, url })
 }
 
-function open() {
-  show.value = true
-}
 function close() {
-  show.value = false
+  emit('onClose', false)
 }
 
-defineExpose({ open, close })
 
 </script>
 
@@ -138,8 +131,8 @@ defineExpose({ open, close })
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  backdrop-filter: blur(16px) brightness(1.15) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) brightness(1.15) saturate(1.2);
+  /*backdrop-filter: blur(16px) brightness(1.15) saturate(1.2);*/
+  /*-webkit-backdrop-filter: blur(16px) brightness(1.15) saturate(1.2);*/
   transition: background 0.3s;
 }
 
@@ -226,7 +219,7 @@ defineExpose({ open, close })
 
 .asset-mobile-tab {
   padding: 6px 14px;
-  color: #222;
+  color: #444;
   font-size: 15px;
   border-radius: 6px 6px 0 0;
   background: transparent;
@@ -290,7 +283,7 @@ defineExpose({ open, close })
   font-size: 14px;
   border-radius: 5px;
   background: #f0f0f0;
-  color: #222;
+  color: #444;
   font-weight: 400;
   box-shadow: none;
   text-align: center;
@@ -309,7 +302,7 @@ defineExpose({ open, close })
 }
 
 .asset-vol-list-mobile .asset-btn.free {
-  color: #222;
+  color: #444;
   background: #f0f0f0;
   font-weight: 500;
   border-radius: 5px;
@@ -338,7 +331,6 @@ defineExpose({ open, close })
   opacity: 0.95;
   transition: color .2s, background .2s, box-shadow .2s;
   white-space: nowrap;
-  font-weight: 500;
   border: none;
   box-shadow: none;
 }
@@ -348,7 +340,23 @@ defineExpose({ open, close })
   background: rgba(0, 0, 0, 0.18);
   box-shadow: none;
   opacity: 1;
-  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.asset-picker:not(.mobile) .asset-tab.active::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, #23ade5 0%, rgba(35, 173, 229, 0.12) 60%, transparent 100%);
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: ripple-fade 0.7s cubic-bezier(.4, 0, .2, 1);
+  z-index: 0;
 }
 
 .asset-picker:not(.mobile) .asset-tab-content {
@@ -415,15 +423,40 @@ defineExpose({ open, close })
   color: #23ade5;
   background: rgba(0, 0, 0, 0.18);
   font-weight: 600;
+  position: relative;
+  overflow: hidden;
 }
 
-.asset-picker:not(.mobile) .asset-btn.free {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  font-weight: 500;
-  border-radius: 5px;
-  padding: 6px 16px;
-  margin: 0 6px;
+.asset-picker:not(.mobile) .asset-btn.active::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, #23ade5 0%, rgba(35, 173, 229, 0.12) 60%, transparent 100%);
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: ripple-fade 0.7s cubic-bezier(.4, 0, .2, 1);
+  z-index: 0;
+}
+
+@keyframes ripple-fade {
+  0% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+
+  60% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  100% {
+    opacity: 0.0;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
 }
 
 @media (max-width: 600px) {
@@ -458,5 +491,23 @@ defineExpose({ open, close })
 .asset-slide-up-leave-to {
   transform: translateY(100%);
   opacity: 0;
+}
+
+.asset-pc-close {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 28px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: color .2s;
+  line-height: 1;
+}
+
+.asset-pc-close:hover {
+  color: #23ade5;
 }
 </style>

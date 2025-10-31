@@ -7,8 +7,8 @@
   </div>
   <ToolBar ref="toolbarRef" :toolBars="toolBars" :onOpenRobot="openRobot"></ToolBar>
   <RobotDrawer :show="robotVisible" @close="onRobotClose" @select="onRobotSelect" />
-  <AssetPicker ref="assetPickerRef" :assets="assetList" :active="assetActive" @selectAsset="selectAsset"
-    @selectVol="selectVol" @close="closeAssetPicker" />
+  <AssetPicker v-model:show="assetPickerVisible" :assets="assetList" :active="assetActive" @selectAsset="selectAsset"
+    @selectVol="selectVol" @onClose="closeAssetPicker" />
 </template>
 
 <script setup>
@@ -35,12 +35,12 @@ const msgRef = ref(null)
 const loadingRef = ref(null)
 const toolbarRef = ref(null)
 const robotVisible = ref(false)
+const assetPickerVisible = ref(false)
 let assetActive = ref({ asset: '', vol: 1 })
 let assetList = ref([])
 let artInstance = null
 let wasPlaying = false
 let isMobile = window.isMobile()
-const assetPickerRef = ref(null)
 
 // 初始化, 加载配置
 onMounted(async () => {
@@ -135,10 +135,32 @@ function openRobot() {
   }
 }
 
-// 机器人显示
+// 机器人关闭
 function onRobotClose() {
   robotVisible.value = false
   if (artInstance && wasPlaying) {
+    artInstance.play()
+  }
+}
+
+// 打开选集弹窗，传递初始参数
+function openAssetPicker() {
+  assetPickerVisible.value = true
+  if (artInstance) {
+    wasPlaying = artInstance.playing
+    if (wasPlaying) artInstance.pause()
+  }
+}
+function closeAssetPicker() {
+  assetPickerVisible.value = false
+  if (artInstance && wasPlaying) {
+    artInstance.play()
+  }
+}
+
+// 播放如果未播放
+function ifPlay() {
+  if (artInstance && !artInstance.wasPlaying) {
     artInstance.play()
   }
 }
@@ -165,13 +187,6 @@ function onRobotSelect(item) {
       }
       updateAssetPickerBtn()
     })
-  }
-}
-
-// 播放如果未播放
-function ifPlay() {
-  if (artInstance && !artInstance.wasPlaying) {
-    artInstance.play()
   }
 }
 
@@ -222,14 +237,6 @@ function selectVol({ asset, vol, url }) {
   if (artInstance && url) {
     artInstance.switchUrl(url)
   }
-}
-
-// 打开选集弹窗，传递初始参数
-function openAssetPicker() {
-  assetPickerRef.value && assetPickerRef.value.open()
-}
-function closeAssetPicker() {
-  assetPickerRef.value && assetPickerRef.value.close()
 }
 
 const toolbarHeight = computed(() => window.system?.toolbarHeight || 60)
