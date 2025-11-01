@@ -1,9 +1,8 @@
 <template>
   <div class="toolbar-custom" :class="{ mobile: isMobile }" v-show="isMobile">
     <div class="toolbar-left-ad">
-      <slot name="ad">
-        <div class="ad-placeholder">广告位招租</div>
-      </slot>
+      <Advertisement code="m-toolbar-footer" class="ad-toolbar-footer" name="移动端工具栏底部广告" :interval="[20, 100]"
+        :switch="true" :reserve="true" />
     </div>
     <div class="toolbar-buttons">
       <!-- 其余自定义按钮放在前面 -->
@@ -34,6 +33,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import Advertisement from './Advertisement.vue'
 
 const props = defineProps({
   toolBars: {

@@ -38,3 +38,24 @@ export function initGlobalSystemConfig() {
 export function getMd5(str) {
   return CryptoJS(str).toString()
 }
+
+/**
+ * 随机获取广告（支持权重）
+ * @param {Array} adArr - 广告数组，每个元素可有 weight 字段
+ * @returns {*} 随机选中的广告或 undefined
+ */
+export function getRandomAdByWeight(adArr) {
+  if (!Array.isArray(adArr) || adArr.length === 0) return undefined
+  const totalWeight = adArr.reduce(
+    (sum, item) => sum + (typeof item.weight === 'number' ? item.weight : 1),
+    0
+  )
+  if (totalWeight <= 0) return adArr[Math.floor(Math.random() * adArr.length)]
+  let rand = Math.random() * totalWeight
+  for (const item of adArr) {
+    const w = typeof item.weight === 'number' ? item.weight : 1
+    if (rand < w) return item
+    rand -= w
+  }
+  return adArr[adArr.length - 1]
+}

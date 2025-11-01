@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import NoticeBar from './NoticeBar.vue'
 import LoadingCover from './LoadingCover.vue'
 import ArtPlayer from './ArtPlayer.vue'
@@ -26,7 +26,8 @@ import { initGlobalSystemConfig, getMd5 } from '../unit/utils.js'
 
 const props = defineProps({
   isLive: { type: Boolean, default: false },
-  url: { type: String, default: '' }
+  url: { type: String, default: '' },
+  vod: { type: [String, Number], default: '' }
 })
 const notice = ref('')
 const config = ref(null)
@@ -53,6 +54,18 @@ onMounted(async () => {
   } catch (e) {
     msgRef.value?.updateLine('player', { text: '配置加载失败', status: 'error' })
     console.error(e)
+  }
+  // 自动根据 url/vod 状态切换播放
+  if (!props.url && props.vod) {
+    playByVodId(props.vod)
+  }
+})
+watch([
+  () => props.url,
+  () => props.vod
+], ([newUrl, newVod]) => {
+  if (!newUrl && newVod) {
+    playByVodId(newVod)
   }
 })
 
@@ -165,28 +178,33 @@ function ifPlay() {
   }
 }
 
+// 播放视频ID
+function playByVodId(vodId) {
+  if (!vodId) return
+  if (!artInstance) return
+  getMovieDetail(vodId).then(res => {
+    const data = res.data || {}
+    const assets = data.assets || []
+    const asset = data.asset || ''
+    assetList.value = assets
+    let resource = assets.find(r => r.asset === asset) || assets[0]
+    let vol = 1
+    assetActive.value = { asset, vol }
+    if (!resource || !resource.urls || resource.urls.length < vol) vol = 1
+    if (resource && resource.urls && resource.urls[vol - 1]) {
+      artInstance.switchUrl(resource.urls[vol - 1].url)
+    } else {
+      console.log('没有找到相应的资源')
+    }
+    updateAssetPickerBtn()
+  })
+}
+
 // 机器人选中视频
 function onRobotSelect(item) {
-  if (item && artInstance) {
-    getMovieDetail(item.id).then(res => {
-      robotVisible.value = false
-      const data = res.data || {}
-      const assets = data.assets || []
-      const asset = data.asset || ''
-      assetList.value = assets
-      let resource = assets.find(r => r.asset === asset) || assets[0]
-      let vol = item.vol
-      if (!vol || vol < 1) vol = 1
-      assetActive.value = { asset, vol }
-      if (!resource || !resource.urls || resource.urls.length < vol) vol = 1
-      // 切换播放
-      if (resource && resource.urls && resource.urls[vol - 1]) {
-        artInstance.switchUrl(resource.urls[vol - 1].url)
-      } else {
-        console.log('没有找到相应的资源')
-      }
-      updateAssetPickerBtn()
-    })
+  if (item && item.id) {
+    playByVodId(item.id)
+    robotVisible.value = false
   }
 }
 

@@ -28,7 +28,7 @@
           </transition-group>
         </div>
         <div class="robot-footer">
-          <input v-model="input" @keyup.enter="send" placeholder="输入影片名..." />
+          <input v-model="input" ref="inputEl" @keyup.enter="send" placeholder="输入影片名..." />
           <button @click="send" :disabled="loading">{{ loading ? '发送中...' : '发送' }}</button>
         </div>
       </div>
@@ -37,17 +37,24 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { searchMovie } from '../mock/index.js'
 const props = defineProps({ show: { type: Boolean, default: false } })
 const show = computed(() => props.show)
 const emit = defineEmits(['close', 'select'])
-const input = ref('')
 const messages = ref([])
 const loading = ref(false)
+const inputEl = ref(null)
 
 const isMobile = computed(() => window.innerWidth < 860 || /Mobile|Android|iP(hone|od|ad)/.test(navigator.userAgent))
 const transitionName = computed(() => isMobile.value ? 'robot-fade' : 'robot-drawer-right')
+const input = ref('')
+
+defineExpose({
+  send,
+  input,
+  sendNow
+})
 
 const STORAGE_KEY = 'robot_chat_history'
 const MAX_HISTORY = 100
@@ -115,9 +122,22 @@ async function send() {
     loading.value = false
   }
 }
+function sendNow(keyword) {
+  input.value = keyword
+  send()
+}
 function close() { emit('close') }
 
 onMounted(() => loadHistory())
+watch(() => props.show, (val) => {
+  if (val) {
+    nextTick(() => {
+      const body = document.querySelector('.robot-body')
+      if (body) body.scrollTop = body.scrollHeight
+      inputEl.value && inputEl.value.focus()
+    })
+  }
+})
 </script>
 
 <style scoped>
